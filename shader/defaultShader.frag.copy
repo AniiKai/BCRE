@@ -1,0 +1,238 @@
+#version 330 core
+out vec4 FragColor;
+
+in vec2 res;
+in vec2 cam;
+in vec3 cOff;
+in float iTime;
+
+const float MIN_DIST = 0.0;
+const float MAX_DIST = 100.0;
+const float ACC = 0.00001;
+const float PI = 3.14159;
+
+// NOISE SHIT ###################################3
+// Pseudo random number generator. 
+float hash( vec2 a )
+{
+
+    return fract( sin( a.x * 3433.8 + a.y * 3843.98 ) * 45933.8 );
+
+}
+
+// Value noise courtesy of BigWingz 
+// check his youtube channel he has
+// a video of this one.
+// Succint version by FabriceNeyret
+float snoise( vec2 U )
+{
+    vec2 id = floor( U );
+          U = fract( U );
+    U *= U * ( 3. - 2. * U );  
+
+    vec2 A = vec2( hash(id)            , hash(id + vec2(0,1)) ),  
+         B = vec2( hash(id + vec2(1,0)), hash(id + vec2(1,1)) ),  
+         C = mix( A, B, U.x);
+
+    return mix( C.x, C.y, U.y );
+}
+//###############################################
+
+
+mat3 rx(float t) {
+	return mat3(
+		vec3(1., .0, .0),
+		vec3(.0, cos(t), -sin(t)),
+		vec3(.0, sin(t), cos(t))
+		   );
+}
+
+mat3 ry(float t) {
+	return mat3(
+		vec3(cos(t), .0, sin(t)),
+		vec3(.0, 1., .0),
+		vec3(-sin(t), .0, cos(t))
+		   );
+}
+
+mat3 rz(float t) {
+	return mat3(
+		vec3(cos(t), -sin(t), .0),
+		vec3(sin(t), cos(t), .0),
+		vec3(.0, .0, 1.)
+		   );
+}
+
+mat3 id() {
+	return mat3(
+		vec3(1., 0., 0.),
+		vec3(0., 1., 0.),
+		vec3(0., 0., 1.)
+		   );
+}
+
+
+
+vec4 sphere(vec3 p, float r, vec3 off, vec3 col) {
+	return vec4(col, length(p - off) - r);
+}
+
+vec4 cube(vec3 p, float r, vec3 off, vec3 col) {
+	return vec4(col, max(abs(p.x - off.x), max(abs(p.y - off.y), abs(p.z - off.z))) - r);
+}
+
+vec4 vmin(vec4 a, vec4 b) {
+	return a.w < b.w ? a : b;
+}
+
+vec4 vmax(vec4 a, vec4 b) {
+	return a.w > b.w ? a : b;
+}
+
+vec4 svmin(vec4 d1, vec4 d2, float k) {
+  float h = clamp( 0.5 + 0.5*(d2.w-d1.w)/k, 0.0, 1.0 );
+  return mix( d2, d1, h ) - k*h*(1.0-h);
+}
+
+vec4 svmax(vec4 d1, vec4 d2, float k) {
+  float h = clamp( 0.5 - 0.5*(d2.w+d1.w)/k, 0.0, 1.0 );
+  return mix( d2, -d1, h ) + k*h*(1.0-h);
+}
+vec3 repeat(vec3 p, vec3 c) {
+	return mod(p+0.5*c, c)-0.5*c;
+}
+
+// SCN #####################
+vec4 scene(vec3 p) {
+	vec4 flr = vec4(0.1, 0.1, 0.1, p.y + 1.);
+	flr.xyz = vec3(1. + 0.7*mod(floor(p.x) + floor(p.z), 2.));
+	flr.w += snoise(vec2(p.x, p.y)*p.z*2.) * 0.1;
+	vec4 rf = vec4(0.1, 0.1, 0.1, 3. - p.y);
+	rf.xyz = vec3(1. + 0.7*mod(floor(p.x) + floor(p.z), 2.));
+	//p = repeat(p, vec3(8., 20., 8.));
+	vec4 s1 = cube(p, 2., vec3(1., 1., 1.), vec3(1., 0., 0.));
+	s1.w += snoise(vec2(p.x, p.y)*p.z*2.5) * 0.05;
+	vec4 s1s = sphere(p, 1.25, vec3(-0.5, 1., -0.5), vec3(0., 0., 0.));
+	s1 = svmax(s1s, s1, 0.5);
+	vec4 s2s = sphere(p, 1.25, vec3(2.5, 1., -0.5), vec3(0., 0., 0.));
+	s1 = svmax(s2s, s1, 0.5);
+	vec4 s3s = sphere(p, 1.25, vec3(-0.5, 1., 2.5), vec3(0., 0., 0.));
+	s1 = svmax(s3s, s1, 0.5);
+	vec4 s4s = sphere(p, 1.25, vec3(2.5, 1., 2.5), vec3(0., 0., 0.));
+	s1 = svmax(s4s, s1, 0.5);
+	vec4 s5s = sphere(p, 1.5, vec3(1., 1., 1.), vec3(0., 0., 0.));
+	s1 = svmax(s5s, s1, 0.5);
+
+	vec4 c1 = sphere(p, 0.2, vec3(0.5*cos(iTime*20.)+1., 2.*sin(iTime*0.5)+1., 0.5*sin(iTime*20.)+1.), vec3(1., 0., 0.));
+	s1 = svmin(s1, c1, 0.9);
+	s1 = svmin(s1, rf, 0.9);
+
+	return svmin(flr, s1, 0.9);
+}
+// ################################
+vec3 normal(in vec3 p) {
+    vec2 e = vec2(1.0, -1.0) * 0.0001; // epsilon
+    return normalize(
+      e.xyy * scene(p + e.xyy).w +
+      e.yyx * scene(p + e.yyx).w +
+      e.yxy * scene(p + e.yxy).w +
+      e.xxx * scene(p + e.xxx).w);
+}
+
+vec4 marchLight(vec3 p, vec3 lo, vec3 col, float str) {
+	vec3 ld = normalize(lo-p);
+	vec3 nrm = normal(p);
+	vec3 pnt = vec3(0.);
+	float depth = MIN_DIST;
+	float md = MAX_DIST;
+	for (int i=0; i<255; i++) {
+		pnt = p+nrm + depth*ld;
+		float d = scene(pnt).w;
+		if (d < md) md = d;
+		depth += d;
+		if (d < ACC || depth > MAX_DIST) break;
+	}
+	float c = clamp(dot(normalize(lo-p), nrm), 0.25, 1.) * md + 0.2;
+	c /= abs(length(p - lo))*str;
+	//col -= md*c/5.;
+	return vec4(col, c);
+}
+
+// LTN #############################
+vec4 light(vec3 p) {
+	//p = repeat(p, vec3(8., 20., 8.));
+	vec3 lo1 = vec3(1., 2., 1.);
+	vec3 lcol1 = vec3(.25);
+	float str1 = 0.5;
+	vec3 lo = vec3(5., 1., 5.);
+	vec3 lcol = vec3(.25);
+	float str = 0.25;
+	return marchLight(p, lo1, lcol1, str1) + marchLight(p, lo, lcol, str);
+}
+// #############################
+
+
+vec4 march(vec3 ro, vec3 rd) {
+	vec4 depth = vec4(0.0, 0.0, 0.0, MIN_DIST);
+	vec3 p = vec3(0.0, 0.0, 0.0);
+	for (int i=0; i<255; i++) {
+		p = ro + depth.w*rd;
+		vec4 d = scene(p);
+		depth.w += d.w;
+		depth.xyz = d.xyz;
+		if (d.w < ACC || depth.w > MAX_DIST) {
+			break;
+		} 
+	}
+	return depth;
+}
+/*
+mat4 lookat(vec3 p) {
+	vec3 dir = normalize(vec3(p));
+	vec3 right = normalize(cross(vec3(0., 1., 0.), dir));
+	vec3 up = normalize(cross(dir, right));
+	p = normalize(p);
+	return mat4(
+		vec4(right*-1, dot(right, p)),
+		vec4(up, dot(up, p)),
+		vec4(dir, dot(dir, p)),
+		vec4(0., 0., 0., 1.));
+}
+vec3 ref(vec3 rj, vec3 nrm) {
+	return rj - 2*nrm*(dot(rj, nrm));
+}
+*/
+
+void main() {
+	vec2 uv = (gl_FragCoord.xy - 0.5 * res.xy) / res.y;
+	vec3 ro = vec3(0.0, 0.0, 5.0) + cOff;
+	vec3 rd = vec3(uv.x, uv.y, -1.0);
+	rd *= ry(cam.x);
+	//vec4 rtmp = vec4(rd, 0.);
+	//rtmp *= lookat(ro);
+	//rd = rtmp.xyz;
+	vec3 col = vec3(0.0, 0.0, 0.0);
+	rd = normalize(rd);
+	vec4 d = march(ro, rd);
+	if (d.w < 100.0) {
+		vec3 np = ro + d.w*rd;
+		vec3 nrm = normal(np);
+		vec3 ref = reflect(normalize(rd), nrm);
+		vec4 d2 = march(np+nrm, ref);
+		vec4 l = light(np);
+		if (d2.w < 100.0) {
+			vec4 d2l = light(np+nrm + d2.w*ref);
+			d2l *= 2.;
+			col = (vec3(l.w)*vec3(d2l.w))*(vec3(1.)+d.xyz+l.xyz+d2.xyz+d2l.xyz);
+		} else {
+			col = (vec3(l.w))*(vec3(1.)+d.xyz+l.xyz+vec3(0.3, 0.4, 0.8));
+		}
+		float fresnel = pow(clamp(1. - dot(normal(np), rd*-1.), 0., 0.75), 5.);
+		col += fresnel;
+		col = mix(col, vec3(0.1, 0.0, 0.1), 1. - exp(-0.00002 * d.w * d.w * d.w));
+	} else {
+		vec4 sun = light(ro + d.w*rd);
+		col = vec3(0.1, 0.0, 0.1) + 0.02*sun.w*(vec3(1.)+sun.xyz);
+	}
+	FragColor = vec4(col.x, col.y, col.z, 1.0);
+}
