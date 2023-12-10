@@ -40,21 +40,21 @@ void main() {
 	vec3 col = vec3(0.0, 0.0, 0.0);
 	rd = normalize(rd);
 	vec4 d = march(ro, rd);
-	if (d.w < 100.0) {
+	if (d.w < MAX_DIST) {
 		vec3 np = ro + d.w*rd;
 		vec3 nrm = normal(np);
 		vec3 ref = reflect(normalize(rd), nrm);
 		vec4 d2 = march(np+nrm, ref);
-		vec4 l = light(np);
-		if (d2.w < 100.0) {
-			vec4 d2l = light(np+nrm + d2.w*ref);
+		vec4 l = light(rd, np);
+		if (d2.w < MAX_DIST){
+			vec4 d2l = light(rd, np+nrm + d2.w*ref);
 			d2l *= 2.;
-			col = (vec3(l.w)*vec3(d2l.w))*(vec3(1.)+d.xyz+l.xyz+d2.xyz+d2l.xyz);
+			//col = vec3(l.w)*(vec3(1.)+d.xyz+l.xyz);
+			col = vec3(l.w)*vec3(d2l.w)*(vec3(1.)+d.xyz+(0.75*l.xyz));
 		} else {
-			col = (vec3(l.w))*(vec3(1.)+d.xyz+l.xyz+vec3(0.3, 0.4, 0.8));
+			//col = vec3(l.w)*(vec3(1.)+d.xyz+l.xyz);
+			col = (vec3(l.w))*(vec3(1.)+d.xyz+(0.75*l.xyz)+(0.5*skyCol));
 		}
-		float fresnel = pow(clamp(1. - dot(normal(np), rd*-1.), 0., 0.75), 5.);
-		col += fresnel;
 		col = mix(col, skyCol, 1. - exp(fogPow * d.w * d.w * d.w));
 	} else {
 		//vec4 sun = light(ro + d.w*rd);

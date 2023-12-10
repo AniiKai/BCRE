@@ -1,7 +1,7 @@
 vec4 scene(vec3 p) {
 	vec4 flr = vec4(0.1, 0.1, 0.1, p.y+1.);
 	//flr.xyz += vec3(0.7*mod(floor(p.x) + floor(p.z), 2.));
-	flr.w += snoise(p.xy/p.z*10.)*0.01;
+	//flr.w += snoise(p.xy/p.z*10.)*0.01;
 	vec3 tp = p;
 	p *= rz(0.15);
 	vec4 s1 = cube(p, 0.1, vec3(1., 1., 1.), vec3(0., 1., 0.));

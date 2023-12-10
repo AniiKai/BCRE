@@ -41,7 +41,7 @@ int main() {
 	char* ps = (char*)calloc(1024, sizeof(char));
 	char* pl = (char*)calloc(1024, sizeof(char));
 	printf("which program would you like to run?\n");
-	printf("1): orb\t2): liminal cover\t3): temperate cover");
+	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment");
 	printf("\nINPUT >> ");
 	int ch;
 	scanf("%d", &ch);
@@ -57,6 +57,14 @@ int main() {
 		case 3:
 			strcat(ps, "shader/temperate-scene.glsl");
 			strcat(pl, "shader/temperate-light.glsl");
+			break;
+		case 4:
+			strcat(ps, "shader/hardcore-scene.glsl");
+			strcat(pl, "shader/hardcore-light.glsl");
+			break;
+		case 5:
+			strcat(ps, "shader/testenv-scene.glsl");
+			strcat(pl, "shader/testenv-light.glsl");
 			break;
 		default:
 			strcat(ps, "shader/orb-scene.glsl");
