@@ -20,10 +20,12 @@ vec4 marchLight(vec3 rd, vec3 p, vec3 lo, vec3 col, float str) {
 		depth += d;
 		if (d < ACC || depth > MAX_DIST) break;
 	}
+	// Phong
 	float c = clamp(dot(ld, nrm), 0.25, 1.)*md + 0.2; // diffuse
 	c += 0.6*pow(clamp(dot(reflect(-ld, nrm), rd), 0., 1.), 8.); // specular 
 	c += 0.75*pow(clamp(1. - dot(nrm, -rd), 0., 1.), 1.); // fresnel
-	c /= str*abs(length(lo-p));
+	c *= (str) / (length(lo-p)*length(lo-p));
+	//c /= str*abs(length(lo-p)); // light fall off
 	//col -= md*c/5.;
 	return vec4(col, c);
 }

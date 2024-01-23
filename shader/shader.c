@@ -31,6 +31,9 @@ int createShader(char* sc, char* lc) {
 	}
 	fclose(vFile);
 	fclose(fFile);
+	for (int i=0; i<size; i++) {
+		fclose(includes[i]);
+	}
 
 	unsigned int vertex; unsigned int fragment;
 	

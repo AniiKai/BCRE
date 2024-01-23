@@ -61,9 +61,9 @@ void main() {
 		//col = vec3(0.9, 0.9, 1.) + 0.02*sun.w*(vec3(1.)+sun.xyz);
 		col = skyCol;
 	}
-	float exposure = 1.5;
+	float exposure = 5.;
 	col = vec3(1.0) - exp(-col * exposure); 
 	FragColor = vec4(col.x, col.y, col.z, 1.0);
-	float gamma = 0.5;
+	float gamma = 0.25;
 	FragColor.xyz = pow(FragColor.xyz, vec3(1./gamma));
 }

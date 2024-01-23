@@ -7,7 +7,7 @@ in vec3 cOff;
 in float iTime;
 
 const float MIN_DIST = 0.0;
-const float MAX_DIST = 100.0;
+const float MAX_DIST = 255.0;
 const float ACC = 0.000001;
 const float PI = 3.14159;
 
