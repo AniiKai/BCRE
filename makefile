@@ -2,7 +2,7 @@
 CC = gcc
 WCC = x86_64-w64-mingw32-gcc
 
-CFLAGS  = -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -lm 
+CFLAGS  = -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -lm
 WFLAGS = -I/mingw64/include/ -L/mingw64/lib -lglfw3dll -lopengl32
 
 default:  main.o glad.o shader.o 

@@ -33,7 +33,7 @@ void main() {
 	vec2 uv = (gl_FragCoord.xy - 0.5 * res.xy) / res.y;
 	vec3 ro = vec3(0.0, 0.0, 5.0) + cOff;
 	vec3 rd = vec3(uv.x, uv.y, -1.0);
-	rd *= ry(cam.x);
+	rd *= rx(cam.y) * ry(cam.x);
 	//vec4 rtmp = vec4(rd, 0.);
 	//rtmp *= lookat(ro);
 	//rd = rtmp.xyz;

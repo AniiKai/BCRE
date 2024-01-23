@@ -2,6 +2,7 @@ vec4 scene(vec3 p) {
 	
 	vec4 flr = vec4(.8, .8, 1., p.y + 1);
 	flr.xyz = vec3(1. + 0.7*mod(floor(p.x) + floor(p.z), 2.));
+	flr.w += snoise(p.xz + iTime);
 
 	vec4 sph1 = sphere(p, vec3(2., 1., 3.), vec3(2., -3., 5.), vec3(0.));
 

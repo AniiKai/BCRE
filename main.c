@@ -19,8 +19,13 @@ const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
 
-double* cursorPosX;
-double* cursorPosY;
+double cursorPosX;
+double cursorPosY;
+double xinit;
+double yinit;
+double* newPosX;
+double* newPosY;
+double sensitivity = 0.001;
 vec3 pos = {0.0f, 0.0f, 0.0f};
 
 int main() {
@@ -41,7 +46,7 @@ int main() {
 	char* ps = (char*)calloc(1024, sizeof(char));
 	char* pl = (char*)calloc(1024, sizeof(char));
 	printf("which program would you like to run?\n");
-	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment");
+	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment\t6): Ravers Cover");
 	printf("\nINPUT >> ");
 	int ch;
 	scanf("%d", &ch);
@@ -65,6 +70,10 @@ int main() {
 		case 5:
 			strcat(ps, "shader/testenv-scene.glsl");
 			strcat(pl, "shader/testenv-light.glsl");
+			break;
+		case 6:
+			strcat(ps, "shader/raver-scene.glsl");
+			strcat(pl, "shader/raver-light.glsl");
 			break;
 		default:
 			strcat(ps, "shader/orb-scene.glsl");
@@ -143,11 +152,14 @@ int main() {
 	//glEnable(GL_DEPTH_TEST);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glEnable(GL_MULTISAMPLE);
-	double xinit = SCR_WIDTH / 2.0;
-	double yinit = SCR_HEIGHT / 2.0;
-	cursorPosX = &xinit;
-	cursorPosY = &yinit;
-	glfwSetCursorPos(window, *cursorPosX, *cursorPosY);
+	newPosX = (double*)malloc(sizeof(double));
+	newPosY = (double*)malloc(sizeof(double));
+	xinit = SCR_WIDTH / 2.0;
+	yinit = SCR_HEIGHT / 2.0;
+	cursorPosX = 0;
+	cursorPosY = 0;
+	glfwSetCursorPos(window, xinit, yinit);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	float aspect[2] = { (float)SCR_WIDTH, (float)SCR_HEIGHT};	
 	setRes(shader, "iRes", aspect); 
 
@@ -172,7 +184,7 @@ int main() {
 		processInput(window); // process user input
 				      
 		useShader(shader);
-		float mPos[2] = { (float)*cursorPosX, (float)*cursorPosY };
+		float mPos[2] = { (float)cursorPosX, (float)cursorPosY };
 		setRes(shader, "mPos", mPos);
 		setPos(shader, "pos", pos);
 		setTime(shader, "time", (float)glfwGetTime());
@@ -183,6 +195,8 @@ int main() {
 		glfwPollEvents();
 
 	}
+	free(newPosX);
+	free(newPosY);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	/*
@@ -202,21 +216,22 @@ void processInput(GLFWwindow *window) {
     	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		vec3 mv = {-0.1*sin(*cursorPosX), 0.0, -0.1*cos(*cursorPosX)};
+		vec3 mv = {-0.1*sin(cursorPosX), 0.0, -0.1*cos(cursorPosX)};
 		glm_vec3_add(pos, mv, pos);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		vec3 mv = {0.1*sin(*cursorPosX), 0.0, 0.1*cos(*cursorPosX)};
+		vec3 mv = {0.1*sin(cursorPosX), 0.0, 0.1*cos(cursorPosX)};
 		glm_vec3_add(pos, mv, pos);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		vec3 mv = {-0.1*cos(*cursorPosX), 0.0, 0.1*sin(*cursorPosX)};
+		vec3 mv = {-0.1*cos(cursorPosX), 0.0, 0.1*sin(cursorPosX)};
 		glm_vec3_add(pos, mv, pos);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		vec3 mv = {0.1*cos(*cursorPosX), 0.0, -0.1*sin(*cursorPosX)};
+		vec3 mv = {0.1*cos(cursorPosX), 0.0, -0.1*sin(cursorPosX)};
 		glm_vec3_add(pos, mv, pos);
 	}
+	/*
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 		*cursorPosX += 0.05;
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
@@ -225,8 +240,14 @@ void processInput(GLFWwindow *window) {
 		*cursorPosY += 0.05;
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		*cursorPosY -= 0.05;
+	*/
+	glfwGetCursorPos(window, newPosX, newPosY);
+	cursorPosX += (xinit - *newPosX) * sensitivity;
+	cursorPosY += (yinit - *newPosY) * sensitivity;
+	glfwSetCursorPos(window, xinit, yinit);
 	
-	//glfwGetCursorPos(window, cursorPosX, cursorPosY);
+
+	
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
