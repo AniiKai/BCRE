@@ -1,7 +1,7 @@
 vec4 march(vec3 ro, vec3 rd) {
 	vec4 depth = vec4(0.0, 0.0, 0.0, MIN_DIST);
 	vec3 p = vec3(0.0, 0.0, 0.0);
-	for (int i=0; i<255; i++) {
+	for (int i=0; i<int(MAX_DIST); i++) {
 		p = ro + depth.w*rd;
 		vec4 d = scene(p);
 		depth.w += d.w;

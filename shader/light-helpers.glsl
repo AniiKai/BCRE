@@ -13,7 +13,7 @@ vec4 marchLight(vec3 rd, vec3 p, vec3 lo, vec3 col, float str) {
 	vec3 pnt = vec3(0.);
 	float depth = MIN_DIST;
 	float md = MAX_DIST;
-	for (int i=0; i<255; i++) {
+	for (int i=0; i<int(MAX_DIST); i++) {
 		pnt = p+nrm + depth*ld;
 		float d = scene(pnt).w;
 		if (d < md) md = d;
