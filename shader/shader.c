@@ -4,17 +4,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int createShader(char* sc, char* lc) {
+int createShader(char* sc) {
 	FILE* vFile;
 	FILE* fFile;
-	FILE* includes[4];
-	int size = 4;
-	includes[0] = fopen("shader/scene-helpers.glsl", "r");
+	FILE* includes[2];
+	int size = 2;
+	includes[0] = fopen("shader/header.glsl", "r");
 	includes[1] = fopen(sc, "r");
-	includes[2] = fopen("shader/light-helpers.glsl", "r");
-	includes[3] = fopen(lc, "r");
-	vFile = fopen("shader/shader.vert", "r");
-	fFile = fopen("shader/shader.frag", "r");
+	vFile = fopen("shader/vertex.glsl", "r");
+	fFile = fopen("shader/fragment.glsl", "r");
 	char* vShader = (char*)calloc(65536, sizeof(char));
 	char* fShader = (char*)calloc(65536, sizeof(char));
 	char line[1024];

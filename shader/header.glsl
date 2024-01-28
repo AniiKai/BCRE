@@ -124,4 +124,8 @@ vec3 repeat(vec3 p, vec3 c) {
 	return mod(p+0.5*c, c)-0.5*c;
 }
 
+vec3 normal(in vec3 p);
+
+vec4 marchLight(vec3 rd, vec3 p, vec3 lo, vec3 col, float str);
+
 

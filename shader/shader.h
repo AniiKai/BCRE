@@ -2,7 +2,7 @@
 #define SHADER_H
 #include <cglm/cglm.h>
 #include <glad/glad.h>
-int createShader(char* vertexPath, char* fragmentPath);
+int createShader(char* sc);
 
 void setRes(unsigned int ID, char* name, float xy[2]);
 

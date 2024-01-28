@@ -44,7 +44,6 @@ int main() {
 	scanf("%d", &fc);
 
 	char* ps = (char*)calloc(1024, sizeof(char));
-	char* pl = (char*)calloc(1024, sizeof(char));
 	printf("which program would you like to run?\n");
 	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment\t6): Ravers Cover");
 	printf("\nINPUT >> ");
@@ -52,40 +51,33 @@ int main() {
 	scanf("%d", &ch);
 	switch(ch) {
 		case 1:
-			strcat(ps, "shader/orb-scene.glsl");
-			strcat(pl, "shader/orb-light.glsl");
+			strcat(ps, "shader/orb.glsl");
 			break;
 		case 2:
-			strcat(ps, "shader/mhouse-scene.glsl");
-			strcat(pl, "shader/mhouse-light.glsl");
+			strcat(ps, "shader/mhouse.glsl");
 			break;
 		case 3:
-			strcat(ps, "shader/temperate-scene.glsl");
-			strcat(pl, "shader/temperate-light.glsl");
+			strcat(ps, "shader/temperate.glsl");
 			break;
 		case 4:
-			strcat(ps, "shader/hardcore-scene.glsl");
-			strcat(pl, "shader/hardcore-light.glsl");
+			strcat(ps, "shader/hardcore.glsl");
 			break;
 		case 5:
-			strcat(ps, "shader/testenv-scene.glsl");
-			strcat(pl, "shader/testenv-light.glsl");
+			strcat(ps, "shader/testenv.glsl");
 			break;
 		case 6:
-			strcat(ps, "shader/raver-scene.glsl");
-			strcat(pl, "shader/raver-light.glsl");
+			strcat(ps, "shader/raver.glsl");
 			break;
 		default:
-			strcat(ps, "shader/orb-scene.glsl");
-			strcat(pl, "shader/orb-light.glsl");
+			strcat(ps, "shader/orb.glsl");
 			break;
 	}
 	// create the window
 	GLFWwindow* window; 
 	if (fc == 0) {
-		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Att-R", glfwGetPrimaryMonitor(), NULL);
+		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "BCRE", glfwGetPrimaryMonitor(), NULL);
 	} else {
-		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Att-R", NULL, NULL);
+		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "BCRE", NULL, NULL);
 	}
 	
 	if (window == NULL) {
@@ -106,9 +98,8 @@ int main() {
 
 	
 	//Shader testShader("shader/defaultShader.vert", "shader/defaultShader.frag");
-	unsigned int shader = createShader(ps, pl);
+	unsigned int shader = createShader(ps);
 	free(ps);
-	free(pl);
 	// create buffer objects
 	//unsigned int EBO;
 	unsigned int VBO;
