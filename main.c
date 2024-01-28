@@ -51,25 +51,25 @@ int main() {
 	scanf("%d", &ch);
 	switch(ch) {
 		case 1:
-			strcat(ps, "shader/orb.glsl");
+			strcat(ps, "shader/scene/orb.glsl");
 			break;
 		case 2:
-			strcat(ps, "shader/mhouse.glsl");
+			strcat(ps, "shader/scene/mhouse.glsl");
 			break;
 		case 3:
-			strcat(ps, "shader/temperate.glsl");
+			strcat(ps, "shader/scene/temperate.glsl");
 			break;
 		case 4:
-			strcat(ps, "shader/hardcore.glsl");
+			strcat(ps, "shader/scene/hardcore.glsl");
 			break;
 		case 5:
-			strcat(ps, "shader/testenv.glsl");
+			strcat(ps, "shader/scene/testenv.glsl");
 			break;
 		case 6:
-			strcat(ps, "shader/raver.glsl");
+			strcat(ps, "shader/scene/raver.glsl");
 			break;
 		default:
-			strcat(ps, "shader/orb.glsl");
+			strcat(ps, "shader/scene/orb.glsl");
 			break;
 	}
 	// create the window
