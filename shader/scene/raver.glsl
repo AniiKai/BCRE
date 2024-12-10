@@ -10,12 +10,16 @@ vec4 cubering(vec3 p) {
 
 
 vec4 scene(vec3 p) {
-	p = repeat(p, vec3(50.));
+	//p = repeat(p, vec3(50.));
 
 	vec4 pyr1 = pyramid(p, vec3(5., 1., 5.), vec3(0., -2., -0.), vec3(.1, .1, .1));
+	pyr1.w += 0.001*snoise(p.xz * p.y);
 	//vec4 sph = sphere(p, vec3(.1), vec3(-1., 5., -1.), vec3(1., 0., 0.));
 	//pyr1 = vmin(pyr1, sph);
 	vec4 cubes = cubering(p * ry(PI/4) * rx(PI/8) * rz(PI/8) + vec3(-10., 0., -10.)*ry(PI/4)*rx(PI/8)*rz(PI/8));
+	cubes.w += 0.001*snoise(p.xz * p.y*p.x);
+	vec4 bigCube = cube(p*ry(PI/4), vec3(1., 50., 50.), vec3(23., 0., 23.)*ry(PI/4), vec3(.1));
+	cubes = vmin(cubes, bigCube);
 
 	return svmin(cubes, pyr1, 0.9);
 }
@@ -25,6 +29,6 @@ float fogPow = -0.00003;
 vec4 light(vec3 rd, vec3 p) {
 	vec3 lo = vec3(-1., 4., -1.);
 	vec3 lcol = vec3(1., .15, .0);
-	float str = 500.;
+	float str = 175.;
 	return marchLight(rd, p, lo, lcol, str);
 }

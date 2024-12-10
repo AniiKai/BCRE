@@ -8,7 +8,7 @@ in float iTime;
 
 const float MIN_DIST = 0.0;
 const float MAX_DIST = 127.0;
-const float ACC = 0.000001;
+const float ACC = 0.0000001;
 const float PI = 3.14159;
 
 // NOISE SHIT ###################################3
@@ -92,9 +92,36 @@ vec4 pyramid(vec3 p, vec3 r, vec3 off, vec3 col) {
 	return vec4(col, eq);
 }
 
+// thanks to Inigo Quilez
+// only y component of r determines height
+// x component determines scale
+/*
+vec4 pyramid(vec3 p , vec3 r, vec3 off, vec3 col) {
+	p *= 1 / r.x;
+	p -= off;
+
+	float m2 = r.y*r.y + 0.25;
+	p.xz = abs(p.xz);
+	p.xz = (p.z>p.x) ? p.zx : p.xz;
+	p.xz -= 0.5;
+
+	vec3 q = vec3( p.z, r.y*p.y-0.5*p.x, r.y*p.x+0.5*p.y);
+
+	float s = max(-q.x,0.0);
+	float t = clamp( (q.y-0.5*q.x)/(m2+0.25), 0.0, 1.0 );
+
+	float a = m2*(q.x+s)*(q.x+s) + q.y*q.y;
+	float b = m2*(q.x+0.5*t)*(q.x+0.5*t) + (q.y-m2*t)*(q.y-m2*t);
+
+	float d2 = max(-q.y,q.x*m2+q.y*0.5) < 0.0 ? 0.0 : min(a,b);
+
+	return vec4(col, sqrt( (d2+q.z*q.z)/m2 ) * sign(max(q.z,-p.y)));
+	
+}
+*/
 
 vec4 taurus(vec3 p, vec3 r, vec3 off, vec3 col) {
-	vec2 q = vec2(length(p.xz-off.xz)-r.x, p.y-off.y-r.y);
+	vec2 q = vec2(length(p.xz-off.xz) - r.x, (p.y-off.y) - r.y);
 	return vec4(col, length(q)-r.z);
 }
 

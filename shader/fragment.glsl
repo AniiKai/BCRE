@@ -1,5 +1,5 @@
 vec3 normal(in vec3 p) {
-    vec2 e = vec2(1.0, -1.0) * 0.001; // epsilon
+    vec2 e = vec2(1.0, -1.0) * 0.01; // epsilon
 /*
     return normalize(
       e.xyy * scene(p + e.xyy).w +
@@ -88,10 +88,10 @@ void main() {
 			vec4 d2l = light(rd, np+nrm + d2.w*ref);
 			d2l *= 2.;
 			//col = vec3(l.w)*(vec3(1.)+d.xyz+l.xyz);
-			col = vec3(l.w)*vec3(d2l.w)*(vec3(1.)+d.xyz+(0.75*l.xyz));
+			col = vec3(l.w)*vec3(d2l.w)*((0.75*d2l.xyz)+vec3(1.)+d.xyz+(0.75*l.xyz)+0.25*skyCol);
 		} else {
 			//col = vec3(l.w)*(vec3(1.)+d.xyz+l.xyz);
-			col = (vec3(l.w))*(vec3(1.)+d.xyz+(0.75*l.xyz)+(0.5*skyCol));
+			col = (vec3(l.w))*(vec3(1.)+d.xyz+(0.75*l.xyz)+0.5*skyCol);
 		}
 		col = mix(col, skyCol, 1. - exp(fogPow * d.w * d.w * d.w));
 	} else {

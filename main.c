@@ -45,7 +45,7 @@ int main() {
 
 	char* ps = (char*)calloc(1024, sizeof(char));
 	printf("which program would you like to run?\n");
-	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment\t6): Ravers Cover");
+	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment\t6): Ravers Cover\n7): Promised Land\t8): Abyss 1\t9): Abyss 2");
 	printf("\nINPUT >> ");
 	int ch;
 	scanf("%d", &ch);
@@ -67,6 +67,18 @@ int main() {
 			break;
 		case 6:
 			strcat(ps, "shader/scene/raver.glsl");
+			break;
+		case 7:
+			strcat(ps, "shader/scene/promised.glsl");
+			break;
+		case 8:
+			strcat(ps, "shader/scene/abyss1.glsl");
+			break;
+		case 9:
+			strcat(ps, "shader/scene/abyss2.glsl");
+			break;
+		case 10:
+			strcat(ps, "shader/scene/probe.glsl");
 			break;
 		default:
 			strcat(ps, "shader/scene/orb.glsl");
@@ -176,8 +188,16 @@ int main() {
 				      
 		useShader(shader);
 		float mPos[2] = { (float)cursorPosX, (float)cursorPosY };
-		setRes(shader, "mPos", mPos);
-		setPos(shader, "pos", pos);
+		if (ch == 9) {
+			float pos0[2] = {M_PI_2, 0.0};
+			vec3 mvPos0 = {21.5*sin(0.1*(float)glfwGetTime()) - 18., 0.0, -5.0};
+			setRes(shader, "mPos", pos0);
+			//setRes(shader, "mPos", mPos);
+			setPos(shader, "pos", mvPos0);
+		} else {
+			setRes(shader, "mPos", mPos);
+			setPos(shader, "pos", pos);
+		}
 		setTime(shader, "time", (float)glfwGetTime());
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
