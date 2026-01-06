@@ -1,10 +1,13 @@
-// making this into a c file soon!
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <png.h>
 
 #include <cglm/cglm.h>
 
 #include "shader/shader.h"
+#include "audio/audioStream.h"
+#include "ui/ui.h"
+#include "audio/fft.h"
 
 #include <time.h>
 #include <stdlib.h>
@@ -13,12 +16,14 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+//void close(float* spectra, FILE* f, double* newPosX, double* newPosY);
+
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
-
+// can not have static variables once everything is moved into functions must pass everything, create context variables struct to hold it all
 double cursorPosX;
 double cursorPosY;
 double xinit;
@@ -29,7 +34,23 @@ double sensitivity = 0.001;
 vec3 pos = {0.0f, 0.0f, 0.0f};
 
 int main() {
+
+	// scene path
+	char* ps;
+	// fullscreen
+	int fc;
+	// audio fx
+	int afx;
+	// audio file
+	char* af;
+	// render to file
+	int r;
+	// resolution division
+	int div;
+
+	BCREInitializeProgram(&fc, &afx, &af, &ps, &r, &div);
 	// initialize window variables
+	// create GLFW context ########################
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -38,52 +59,7 @@ int main() {
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	int fc = 0;
-	printf("Run in fullscreen? 0=YES, 1=NO\n");
-	printf("INPUT >> ");
-	scanf("%d", &fc);
 
-	char* ps = (char*)calloc(1024, sizeof(char));
-	printf("which program would you like to run?\n");
-	printf("1): orb\t2): liminal cover\t3): temperate cover\t4): hardcore cover\t5): test environment\t6): Ravers Cover\n7): Promised Land\t8): Abyss 1\t9): Abyss 2");
-	printf("\nINPUT >> ");
-	int ch;
-	scanf("%d", &ch);
-	switch(ch) {
-		case 1:
-			strcat(ps, "shader/scene/orb.glsl");
-			break;
-		case 2:
-			strcat(ps, "shader/scene/mhouse.glsl");
-			break;
-		case 3:
-			strcat(ps, "shader/scene/temperate.glsl");
-			break;
-		case 4:
-			strcat(ps, "shader/scene/hardcore.glsl");
-			break;
-		case 5:
-			strcat(ps, "shader/scene/testenv.glsl");
-			break;
-		case 6:
-			strcat(ps, "shader/scene/raver.glsl");
-			break;
-		case 7:
-			strcat(ps, "shader/scene/promised.glsl");
-			break;
-		case 8:
-			strcat(ps, "shader/scene/abyss1.glsl");
-			break;
-		case 9:
-			strcat(ps, "shader/scene/abyss2.glsl");
-			break;
-		case 10:
-			strcat(ps, "shader/scene/probe.glsl");
-			break;
-		default:
-			strcat(ps, "shader/scene/orb.glsl");
-			break;
-	}
 	// create the window
 	GLFWwindow* window; 
 	if (fc == 0) {
@@ -92,6 +68,7 @@ int main() {
 		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "BCRE", NULL, NULL);
 	}
 	
+
 	if (window == NULL) {
 	    	printf("Failed to create GLFW window");
  	    	glfwTerminate();
@@ -107,12 +84,16 @@ int main() {
 		printf("Failed to initialize GLAD");
 		return -1;
        	}
+	
+	// #####################
 
 	
-	//Shader testShader("shader/defaultShader.vert", "shader/defaultShader.frag");
+	// Create shaders ####################
+	unsigned int texShader = createTexShader();
 	unsigned int shader = createShader(ps);
 	free(ps);
-	// create buffer objects
+	// #########################
+	// create buffer objects for raymarching shader ###########
 	//unsigned int EBO;
 	unsigned int VBO;
 	unsigned int VAO;
@@ -147,8 +128,59 @@ int main() {
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// ####################
+	
+	// set texture shader buffer objects and framebuffer ######################
+	unsigned int quadVAO, quadVBO, quadEBO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glGenBuffers(1, &quadEBO);
 
-	//testShader.use();
+	float quadVertices[] = {
+		1.0f, 1.0f, 0.0f,	1.0f, 1.0f,
+		1.0f, -1.0f, 0.0f,	1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f,	0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f,	0.0f, 0.0f
+	};
+
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+	unsigned int framebuffer;
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+	unsigned int textureColorBuffer;
+	glGenTextures(1, &textureColorBuffer);
+
+	glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, (int)(SCR_WIDTH/div), (int)(SCR_HEIGHT/div), 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		printf("FRAMEBUFFER NOT COMPLETE!\n");
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// #######################
+	
+	useShader(texShader);
+	setSampler(texShader, "image", 0);
+
+	// set raymarching shader uniforms #########################
 	useShader(shader);
 	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	//glEnable(GL_BLEND);
@@ -159,28 +191,49 @@ int main() {
 	newPosY = (double*)malloc(sizeof(double));
 	xinit = SCR_WIDTH / 2.0;
 	yinit = SCR_HEIGHT / 2.0;
-	cursorPosX = 0;
-	cursorPosY = 0;
+	cursorPosX = 0.0;
+	cursorPosY = 0.0;
 	glfwSetCursorPos(window, xinit, yinit);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-	float aspect[2] = { (float)SCR_WIDTH, (float)SCR_HEIGHT};	
+	float aspect[2] = { (float)SCR_WIDTH/div, (float)SCR_HEIGHT/div};	
 	setRes(shader, "iRes", aspect); 
 
+	// ####################
+	
 
+	// Set up audio effect ##########################
+	FILE* f;
+	float* spectra;
+	if (BCREStartAudioStream(afx, &f, &spectra, af) == 0) {
+		glfwSetWindowShouldClose(window, true);
+	}
+	if (afx == 0) free(af);
 
-	double previousTime = glfwGetTime();
 	int frames = 0;
+	int totalFrames = 0;
+	int audioFrames = 0;
+	char* pixelData = (char*)malloc(SCR_WIDTH*SCR_HEIGHT*3*sizeof(char));
+	// ###############################
+
+	// glfw run context #######################
+	double previousTime = glfwGetTime();
 	// openGL window loop
 	while (!glfwWindowShouldClose(window)) {
+		char name[1024] = "";
 		double currentTime = glfwGetTime();
+		
+		
+		if (BCRESeekAudio(afx, &audioFrames, totalFrames, f, spectra) == 0) glfwSetWindowShouldClose(window, true);	
 		frames++;
+		totalFrames++;
 		if (currentTime - previousTime >= 1.0) { // get simulation fps
 			printf("fps: %d\n", frames);
 			frames = 0;
 			previousTime = currentTime;
 		}
 		
-
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		useShader(shader);
 		glClearColor(0.0f, 0.0f, 0.1f, 1.0f); // background color 
 		glClear(GL_COLOR_BUFFER_BIT);
 		
@@ -188,39 +241,55 @@ int main() {
 				      
 		useShader(shader);
 		float mPos[2] = { (float)cursorPosX, (float)cursorPosY };
-		if (ch == 9) {
-			float pos0[2] = {M_PI_2, 0.0};
-			vec3 mvPos0 = {21.5*sin(0.1*(float)glfwGetTime()) - 18., 0.0, -5.0};
-			setRes(shader, "mPos", pos0);
-			//setRes(shader, "mPos", mPos);
-			setPos(shader, "pos", mvPos0);
-		} else {
-			setRes(shader, "mPos", mPos);
-			setPos(shader, "pos", pos);
-		}
-		setTime(shader, "time", (float)glfwGetTime());
+		setRes(shader, "mPos", mPos);
+		setPos(shader, "pos", pos);
+		setTime(shader, "time", (float)glfwGetTime() / 25);
+		if (afx == 0) setSpectrum(shader, "spec", spectra);
+
 		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		glBindVertexArray(0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		useShader(texShader);
+		glClearColor(0.0f, 0.0f, 0.1f, 1.0f); // background color 
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		BCRERenderCurrentFrame(r, SCR_WIDTH, SCR_HEIGHT, totalFrames, pixelData);
+
+		glBindVertexArray(0);
+
 		// swap render buffer 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
 	}
+	// ######################
+	// close glfw context ######################
+	if (afx == 0 ) {
+		free(spectra);
+		fclose(f);
+	}
+	free(pixelData);
 	free(newPosX);
 	free(newPosY);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	/*
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shader);
-	*/
 	glfwTerminate();
+	// #########################
 	return 0;
 
 }
 
+// move these into glfw run context function ####################3
 void processInput(GLFWwindow *window) {
 	// close the program if you press the escape key 
 	
@@ -242,16 +311,6 @@ void processInput(GLFWwindow *window) {
 		vec3 mv = {0.1*cos(cursorPosX), 0.0, -0.1*sin(cursorPosX)};
 		glm_vec3_add(pos, mv, pos);
 	}
-	/*
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		*cursorPosX += 0.05;
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		*cursorPosX -= 0.05;
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		*cursorPosY += 0.05;
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		*cursorPosY -= 0.05;
-	*/
 	glfwGetCursorPos(window, newPosX, newPosY);
 	cursorPosX += (xinit - *newPosX) * sensitivity;
 	cursorPosY += (yinit - *newPosY) * sensitivity;
@@ -264,9 +323,6 @@ void processInput(GLFWwindow *window) {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	// set the buffer size 
 	glViewport(0, 0, width, height);
-
 }
-
-
-
+// ####################
 

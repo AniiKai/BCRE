@@ -6,9 +6,11 @@ in vec2 cam;
 in vec3 cOff;
 in float iTime;
 
+uniform float[1024] spec;
+
 const float MIN_DIST = 0.0;
 const float MAX_DIST = 127.0;
-const float ACC = 0.0000001;
+const float ACC = 0.000001;
 const float PI = 3.14159;
 
 // NOISE SHIT ###################################3

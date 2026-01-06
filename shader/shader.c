@@ -59,6 +59,50 @@ int createShader(char* sc) {
 	return ID;
 }
 
+int createTexShader() {
+	FILE* vFile;
+	FILE* fFile;
+	vFile = fopen("shader/texShaderv.glsl", "r");
+	fFile = fopen("shader/texShaderf.glsl", "r");
+	char* vShader = (char*)calloc(65536, sizeof(char));
+	char* fShader = (char*)calloc(65536, sizeof(char));
+	char line[1024];
+	while(fgets(line, sizeof(line), vFile) != NULL) {
+		strcat(vShader, line);
+	}
+	while(fgets(line, sizeof(line), fFile) != NULL) {
+		strcat(fShader, line);
+	}
+	fclose(vFile);
+	fclose(fFile);
+
+	unsigned int vertex; unsigned int fragment;
+	
+	vertex = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex, 1, (const char**)&vShader, NULL);
+	glCompileShader(vertex);
+	checkCompileErrors(vertex, "VERTEX");
+
+	fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment, 1, (const char**)&fShader, NULL);
+	glCompileShader(fragment);
+	checkCompileErrors(fragment, "FRAGMENT");
+
+	unsigned int ID = glCreateProgram();
+	glAttachShader(ID, vertex);
+	glAttachShader(ID, fragment);
+
+	glLinkProgram(ID);
+	checkCompileErrors(ID, "PROGRAM");
+
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
+	free(vShader);
+	free(fShader);
+	return ID;
+}
+
+
 void checkCompileErrors(GLuint shader, char* type) {
 	GLint success;
 	GLchar infoLog[1024];
@@ -77,6 +121,10 @@ void checkCompileErrors(GLuint shader, char* type) {
 	}
 }
 
+void setSampler(unsigned int ID, char* name, int texNum) {
+	glUniform1i(glGetUniformLocation(ID, name), texNum);
+}
+
 void setRes(unsigned int ID, char* name, float xy[2]) {
 			glUniform2f(glGetUniformLocation(ID, name), xy[0], xy[1]); // I didn't want to read documentation to figure out how to pass in the whole array at once so :] 
 }
@@ -89,7 +137,12 @@ void setTime(unsigned int ID, char* name, float t) {
 			glUniform1f(glGetUniformLocation(ID, name), t);
 }
 
+void setSpectrum(unsigned int ID, char* name, float* data) {
+	glUniform1fv(glGetUniformLocation(ID, name), 1024, data);
+}
+
 void useShader(unsigned int ID) {
 	glUseProgram(ID);
 }
+
 
